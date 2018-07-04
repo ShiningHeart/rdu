@@ -15,6 +15,7 @@
 #include <semaphore.h>
 #include <arpa/inet.h>
 
+#include "logidefs.h"
 #include "dx/dxudefs.h"
 
 #define INET_ADDRLEN_MAX  32
@@ -40,12 +41,10 @@ int main( int argc, char *argv[], char *envp[])
 {
 	int fd, err;
 	struct addrinfo hints, *res;
-	char servIP[INET_ADDRLEN_MAX];
-	int client_socket[MAX_CLIENTS];
+	client_t client_list[MAX_CLIENTS];
 	fd_set readfds;
 	int maxfd, peersd;
 	struct sockaddr_storage peeraddr;
-	char peerIP[INET6_ADDRSTRLEN];
 	socklen_t peeraddrlen;
 	struct timeval tv;
 	int yes = 1;
@@ -124,12 +123,6 @@ int main( int argc, char *argv[], char *envp[])
 			continue;
 		}
 
-		// show socket info
-	#if 0 /* TBD: shows wrong IP address */
-		(void) inet_ntop( res->ai_family, (struct sockaddr_in *)res->ai_addr, servIP, sizeof(servIP));
-		printf("Server IP: %s\n", servIP);
-	#endif
-
 		break;
 	}
 
@@ -145,9 +138,8 @@ int main( int argc, char *argv[], char *envp[])
 	freeaddrinfo( res);
 
 
-	// initialize client_socket[i] to zero to mark as unused
-	for ( int i = 0; i < (sizeof(client_socket)/sizeof(client_socket[0])); i++)
-		client_socket[i] = 0;
+	// zero the client list array
+	memset( &client_list[0], 0, sizeof(client_list));
 
 
 	/* TBD: replace hard-coded 'backlog' value (second argument) */
@@ -173,13 +165,13 @@ int main( int argc, char *argv[], char *envp[])
 		// add client sockets to set (if active)
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if ( client_socket[i] == 0) // IF not active
+			if ( client_list[i].clientfd == 0) // IF not active
 				continue;
 
-			FD_SET( client_socket[i], &readfds);
+			FD_SET( client_list[i].clientfd, &readfds);
 
-			if ( client_socket[i] > maxfd)
-				maxfd = client_socket[i];
+			if ( client_list[i].clientfd > maxfd)
+				maxfd = client_list[i].clientfd;
 		}
 
 		/* TBD: replace hardcoded interval values */
@@ -207,25 +199,25 @@ int main( int argc, char *argv[], char *envp[])
 				exit(EXIT_FAILURE);
 			}
 
-			fprintf(stdout, "server: new connection from %s on socked %d\n", 
-				inet_ntop(peeraddr.ss_family,
-				get_in_addr( (struct sockaddr *)&peeraddr),
-				peerIP,
-				INET6_ADDRSTRLEN), peersd);
-
 
 			/* TBD: handle case where client list is full and connection is recv'd */
 			// add new peer socket to client list
 			for (int i = 0; i < MAX_CLIENTS; i++)
 			{
-				if ( client_socket[i] == 0)
+				if ( client_list[i].clientfd == 0)
 				{
-					client_socket[i] = peersd;
+					client_list[i].clientfd = peersd;
+
+					fprintf(stdout, "[%s][socket %d]: CONNECTION ACCEPTED\n", 
+						inet_ntop(peeraddr.ss_family, 
+							      get_in_addr( (struct sockaddr *)&peeraddr), 
+						    	  client_list[i].clientIP, 
+						      	  INET6_ADDRSTRLEN), 
+					peersd);
+					
 					break;
 				}
 
-				if ( i == (MAX_CLIENTS - 1))
-					close(peersd);
 			}
 
 
@@ -233,28 +225,33 @@ int main( int argc, char *argv[], char *envp[])
 
 #if 1 /* TBD: define variables at start of function */
 		char readbuf[128];
-		ssize_t nread, nbufpos;
+		ssize_t nread;
 #endif
 
 		// check for i/o on client sockets
 		for( int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if ( FD_ISSET( client_socket[i], &readfds))
+			if ( FD_ISSET( client_list[i].clientfd, &readfds))
 			{
 				/* TBD: do something */
-				nread = recv( client_socket[i], readbuf, sizeof(readbuf) - 1, 0);
+				nread = recv( client_list[i].clientfd, readbuf, sizeof(readbuf) - 1, 0);
 				if ( nread <= 0)
 				{
 					// error or connection closed
-					close( client_socket[i]);
-					FD_CLR( client_socket[i], &readfds);
-					client_socket[i] = 0;
+					fprintf(stdout, "[%s][socket %d]: CONNECTION CLOSED\n", client_list[i].clientIP, client_list[i].clientfd);
+					close( client_list[i].clientfd);
+					FD_CLR( client_list[i].clientfd, &readfds);
+					client_list[i].clientfd = 0;
 				}
 				else
 				{
-					readbuf[nread] = '\0';
+					// strip the newline character (formatting)
+					*( strchr( readbuf, '\n')) = '\0';
 
-					fprintf(stdout, "Rx'd: %s", readbuf);
+					fprintf(stdout, "[%s][socket %d]: MESSAGE RECEIVED\n\t %s\n", 
+						client_list[i].clientIP, 
+						client_list[i].clientfd,
+						readbuf);
 				}
 			}
 		}
