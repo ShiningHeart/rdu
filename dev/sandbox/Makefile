@@ -3,11 +3,7 @@ OUT=app
 INC=
 CFLAGS= -g -std=c99 -Wall -c
 LIBS= -lrt
-
-OBJDIR=obj
-OBJS= $(addprefix $(OBJDIR)/, \
-	main.o)
-
+OBJS = main.o
 
 all: $(OUT)
 
@@ -15,10 +11,10 @@ all: $(OUT)
 $(OUT): $(OBJS)
 	$(CC) -g -o $(OUT) $^ $(LIBS)
 
-$(OBJDIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(INC) -o $@ $<
+%.o: %.c
+	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
 .PHONY: clean
 clean:
-	rm $(OBJDIR)/*.o $(OUT)
+	rm -f *.o $(OUT)
 
