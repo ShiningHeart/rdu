@@ -143,6 +143,14 @@ static void dxhbeat( union sigval args)
 		/*================================================================*/
 		/*===============*/ /* TBD: get data from VCU */ /*===============*/
 		/*================================================================*/
+		printf("Hello, CAN Test!\n"); /* for testing */
+
+		err = fxCanDataTx();
+		if ( err == -1)
+		{
+			// handle error
+			fprintf(stderr, "sem_wait failed: %s\n", strerror(errno));
+		}
 
 
 		/* leave critical section */
@@ -174,7 +182,14 @@ int main( int argc, char *argv[])
 
 
 
-	/* TBD: hardware/driver initialization */
+	/* CAN Init */
+	err = fxCanSocketInit();
+	if ( err == -1)
+	{
+		// handle error
+		fprintf(stderr, "CAN Socket Init Failed: %s\n", strerror(errno));
+		exit(EXIT_FAILURE); //??
+	}
 
 
 
