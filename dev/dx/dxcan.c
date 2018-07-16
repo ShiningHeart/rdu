@@ -18,12 +18,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <net/if.h>
 #include <sys/ioctl.h>
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <linux/if.h>
 
 #include "lib.h"
 #include "dxcan.h"
