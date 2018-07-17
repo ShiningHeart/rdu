@@ -6,7 +6,7 @@
 
 
 #include <semaphore.h>
-#include <stdint.h>
+
 
 #define DX_SHM_NAME       "/dx-shm"
 
@@ -18,12 +18,7 @@ typedef struct
 	sem_t sem; // sempahore (must be acquired by process before read/write to shared memory)
 	
 	/* TBD: fields below will contain VCU sensor values */
-	float throttleInput_V;
-	float batteryVoltage_V;
-	float batteryDischargeCurrent_A;
-	uint8_t state;
-	uint8_t enableSignal;
-	uint8_t runSignal;
+	int val;
 } dxshmem_t;
 
 
