@@ -3,7 +3,7 @@ CC=gcc
 # executable name
 OUT=dx
 # non-standard include paths
-INC= -I../
+INC= -I../ -I./include
 # compiler flags
 CFLAGS= -g -std=c99 -Wall -c
 # libraries
@@ -12,7 +12,9 @@ LIBS= -lrt -pthread
 OBJDIR=obj
 # object files
 OBJS= $(addprefix $(OBJDIR)/, \
-	dxtask.o)
+	dxtask.o \
+        dxcan.o \
+        lib.o)
 
 
 all: directories $(OUT)
