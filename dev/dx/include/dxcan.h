@@ -6,5 +6,6 @@
 
 int fxCanSocketInit();
 int fxCanDataTx();
+int fxCanDataRx();
 
 #endif

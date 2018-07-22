@@ -40,6 +40,7 @@
 #include "dxidefs.h"
 #include "dxudefs.h"
 #include "dxproto.h"
+#include "dxcan.h"
 
 /* ===== global variables ===== */
 
@@ -127,8 +128,6 @@ static void dxSigIntHandler(int signo)
 static void dxhbeat( union sigval args)
 {
 	int err;
-	// TBD: args ignored for now
-
 
 	/* enter critical section */
 	err = sem_wait( &((dxshmem_t *)map)->sem);
@@ -144,9 +143,30 @@ static void dxhbeat( union sigval args)
 		/*===============*/ /* TBD: get data from VCU */ /*===============*/
 		/*================================================================*/
 
+		err = fxCanDataTx();
+		if ( err == -1){
+			// handle error
+			fprintf(stderr, "CAN data tx failed: %s\n", strerror(errno));
+		}
+		
+		err = fxCanDataRx( (dxshmem_t *)map );
+		if ( err == -1){
+			// handle error
+			fprintf(stderr, "CAN data rx failed: %s\n", strerror(errno));
+		}
+
+		
+		fprintf(stderr,"Throttle Input: %0.3f \n",*(&((dxshmem_t *)map)->throttleInput_V));
+		fprintf(stderr,"Battery Voltage: %0.2f\n",*(&((dxshmem_t *)map)->batteryVoltage_V));
+		fprintf(stderr,"Battery Current: %0.2f\n",*(&((dxshmem_t *)map)->batteryDischargeCurrent_A));
+		fprintf(stderr,"State: %d \n",*(&((dxshmem_t *)map)->state));
+		fprintf(stderr,"Enable Signal: %d \n",*(&((dxshmem_t *)map)->enableSignal));
+		fprintf(stderr,"Run Signal: %d \n",*(&((dxshmem_t *)map)->runSignal));
 
 		/* leave critical section */
 		sem_post( &((dxshmem_t *)map)->sem);
+		
+
 	}
 
 
@@ -176,6 +196,12 @@ int main( int argc, char *argv[])
 
 	/* TBD: hardware/driver initialization */
 
+	err = fxCanSocketInit();
+	if ( err == -1)
+	{
+		// handle error
+		fprintf(stderr, "CAN socket init failed: %s\n", strerror(errno));
+	}
 
 
 	/* TBD: shared memory creation and initialization subroutine call */	
