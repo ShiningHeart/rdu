@@ -1,8 +1,8 @@
 CC=gcc
 OUT=app
-INC=
+INC= -I/usr/include/libxml2
 CFLAGS= -g -std=c99 -Wall -c
-LIBS= -lrt
+LIBS= -lrt -L/usr/lib/x86_64 -lxml2
 OBJS = main.o
 
 all: $(OUT)

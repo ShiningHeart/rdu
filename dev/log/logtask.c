@@ -26,6 +26,7 @@ static void *map; // pointer to shared memory mapping
 static int   servfd; // server socker descriptor
 
 
+
 void *get_in_addr( struct sockaddr *sa)
 {
 	if ( sa->sa_family == AF_INET)
@@ -35,6 +36,7 @@ void *get_in_addr( struct sockaddr *sa)
 
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
 
 
 int main( int argc, char *argv[], char *envp[])
@@ -213,7 +215,7 @@ int main( int argc, char *argv[], char *envp[])
 							      get_in_addr( (struct sockaddr *)&peeraddr), 
 						    	  client_list[i].clientIP, 
 						      	  INET6_ADDRSTRLEN), 
-					peersd);
+								  peersd);
 					
 					break;
 				}
