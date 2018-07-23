@@ -148,14 +148,18 @@ static void dxhbeat( union sigval args)
 			// handle error
 			fprintf(stderr, "CAN data tx failed: %s\n", strerror(errno));
 		}
-		
-		err = fxCanDataRx( (dxshmem_t *)map );
-		if ( err == -1){
-			// handle error
-			fprintf(stderr, "CAN data rx failed: %s\n", strerror(errno));
+		else
+		{
+			// only execute this if fxCanDataTx succeeded otherwise it will hangup on select()
+			// subroutine call
+			err = fxCanDataRx( (dxshmem_t *)map );
+			if ( err == -1){
+				// handle error
+				fprintf(stderr, "CAN data rx failed: %s\n", strerror(errno));
+			}
 		}
 
-		
+
 		fprintf(stderr,"Throttle Input: %0.3f \n",*(&((dxshmem_t *)map)->throttleInput_V));
 		fprintf(stderr,"Battery Voltage: %0.2f\n",*(&((dxshmem_t *)map)->batteryVoltage_V));
 		fprintf(stderr,"Battery Current: %0.2f\n",*(&((dxshmem_t *)map)->batteryDischargeCurrent_A));
@@ -165,8 +169,6 @@ static void dxhbeat( union sigval args)
 
 		/* leave critical section */
 		sem_post( &((dxshmem_t *)map)->sem);
-		
-
 	}
 
 
