@@ -159,14 +159,14 @@ static void dxhbeat( union sigval args)
 			}
 		}
 
-
+#if 0 /* TBD: print statements for debugging */
 		fprintf(stderr,"Throttle Input: %0.3f \n",*(&((dxshmem_t *)map)->throttleInput_V));
 		fprintf(stderr,"Battery Voltage: %0.2f\n",*(&((dxshmem_t *)map)->batteryVoltage_V));
 		fprintf(stderr,"Battery Current: %0.2f\n",*(&((dxshmem_t *)map)->batteryDischargeCurrent_A));
 		fprintf(stderr,"State: %d \n",*(&((dxshmem_t *)map)->state));
 		fprintf(stderr,"Enable Signal: %d \n",*(&((dxshmem_t *)map)->enableSignal));
 		fprintf(stderr,"Run Signal: %d \n",*(&((dxshmem_t *)map)->runSignal));
-
+#endif
 		/* leave critical section */
 		sem_post( &((dxshmem_t *)map)->sem);
 	}
