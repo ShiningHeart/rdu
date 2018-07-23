@@ -10,21 +10,37 @@
 #include <errno.h>
 #include <time.h>
 
-#include <libxml2/libxml/tree.h>
+#include <libxml/encoding.h>
+#include <libxml/xmlwriter.h>
 
 int main( int argc, char *argv[])
 {
 
-	time_t secSinceEpoch;
-	struct tm bdTime;
 
-	time( &secSinceEpoch);
-	(void) localtime_r ( &secSinceEpoch, &bdTime);
+	xmlDocPtr doc = NULL;
+	xmlNodePtr rootNode = NULL;
 
-	printf("The date is: %s\n", asctime( &bdTime));
+	LIBXML_TEST_VERSION
+
+	doc = xmlNewDoc(BAD_CAST "1.0");
+	rootNode = xmlNewNode( NULL, BAD_CAST "rdu_log");
+	xmlSetProp( rootNode, "date", "23/07/2018");
+	xmlDocSetRootElement( doc, rootNode);
 
 
-	printf("Hello, World!\n");
+	xmlSaveFormatFileEnc("TEST.xml", doc, "UTF-8", 1);
+	xmlFreeDoc(doc);
+
+	// time_t secSinceEpoch;
+	// struct tm bdTime;
+
+	// time( &secSinceEpoch);
+	// (void) localtime_r ( &secSinceEpoch, &bdTime);
+
+	// printf("The date is: %s\n", asctime( &bdTime));
+
+
+	// printf("Hello, World!\n");
 
 	return 0;
 }
