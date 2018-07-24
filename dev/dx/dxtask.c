@@ -177,7 +177,7 @@ static void dxhbeat( union sigval args)
 	if ( err == -1)
 	{
 		// handle error
-		fprintf(stderr, "timer_settime failed; %s\n", strerror(errno));
+		fprintf(stderr, "timer_settime failed: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 }
@@ -295,7 +295,7 @@ int main( int argc, char *argv[])
 	if ( err == -1)
 	{
 		// handle error
-		fprintf(stderr, "timer_settime failed; %s\n", strerror(errno));
+		fprintf(stderr, "timer_settime failed: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 
 	}

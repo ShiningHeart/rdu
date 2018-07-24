@@ -14,6 +14,11 @@
 #include <errno.h>
 #include <semaphore.h>
 #include <arpa/inet.h>
+#include <signal.h>
+#include <time.h>
+
+#include <libxml/encoding.h>
+#include <libxml/xmlwriter.h>
 
 #include "logidefs.h"
 #include "dx/dxudefs.h"
@@ -24,7 +29,18 @@
 
 static void *map; // pointer to shared memory mapping
 static int   servfd; // server socker descriptor
+static timer_t hbeatTimer; /* periodic timer */
 
+/* period of hbeatTimer */
+static struct itimerspec hbeatPeriod = {
+	.it_interval.tv_sec = 0,
+	.it_interval.tv_nsec = 0,
+	.it_value.tv_sec = 1,
+	.it_value.tv_nsec = 0,
+};
+
+static xmlDocPtr doc = NULL;
+static xmlNodePtr rootNode = NULL;
 
 
 void *get_in_addr( struct sockaddr *sa)
@@ -35,6 +51,38 @@ void *get_in_addr( struct sockaddr *sa)
 	}
 
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+
+
+static void loghbeat( union sigval unused)
+{
+	int err;
+
+	/* enter critical section */
+	err = sem_wait( &((dxshmem_t *)map)->sem);
+	if ( err == -1)
+	{
+		// unable to get semaphore
+		fprintf(stderr, "sem_wait failed: %s\n", strerror(errno));
+	}
+	else
+	{
+		/* TBD: periodic work */
+
+
+		/* leave critical section */
+		sem_post( &((dxshmem_t *)map)->sem);
+	}
+
+	// reload the timer (ONE SHOT MODE)
+	err = timer_settime( hbeatTimer, 0, &hbeatPeriod, NULL);
+	if ( err == -1)
+	{
+		// failed to reload timer
+		fprintf(stderr, "timer_settime failed: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 }
 
 
@@ -50,6 +98,11 @@ int main( int argc, char *argv[], char *envp[])
 	socklen_t peeraddrlen;
 	struct timeval tv;
 	int yes = 1;
+
+	struct sigevent sev;
+	time_t secSinceEpoch;
+	struct tm timeStamp;
+	char timeStampBuf[128];
 
 	printf("Hello, logtask!\n");
 
@@ -74,8 +127,41 @@ int main( int argc, char *argv[], char *envp[])
 	close(fd);
 
 
+	/* create a new XML log file */
+	doc = xmlNewDoc(BAD_CAST "1.0");
+	rootNode = xmlNewNode( NULL, BAD_CAST "RDU_log");
 
-	
+	time( &secSinceEpoch);
+	(void) localtime_r( &secSinceEpoch, &timeStamp);
+	(void) asctime_r( &timeStamp, timeStampBuf);
+	*(strchr(timeStampBuf, '\n')) = '\0';
+
+	xmlSetProp( rootNode, BAD_CAST "start_time", BAD_CAST timeStampBuf);
+	xmlDocSetRootElement( doc, rootNode);
+
+
+	/* create and arm (start) one shot timer to trigger loghbeat */
+	memset( &sev, 0, sizeof(sev));
+	sev.sigev_notify = SIGEV_THREAD;
+	sev.sigev_notify_function = loghbeat;
+
+	// create timer
+	err = timer_create( CLOCK_REALTIME, &sev, &hbeatTimer);
+	if ( err == -1)
+	{
+		// failed to create timer
+		fprintf(stderr, "timer_create failed: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// start timer (ONE SHOT MODE)
+	err = timer_settime( hbeatTimer, 0, &hbeatPeriod, NULL);
+	if ( err == -1)
+	{
+		// failed to start timer
+		fprintf(stderr, "timer_settime failed: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
 
 	/* server socket setup */

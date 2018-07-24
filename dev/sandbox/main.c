@@ -15,6 +15,15 @@
 
 int main( int argc, char *argv[])
 {
+	time_t secSinceEpoch;
+	struct tm dateTime;
+	char buf[128];
+
+	time( &secSinceEpoch);
+	(void) localtime_r( &secSinceEpoch, &dateTime);
+	(void) asctime_r( &dateTime, buf);
+
+	*(strchr(buf, '\n')) = '\0';
 
 
 	xmlDocPtr doc = NULL;
@@ -23,11 +32,12 @@ int main( int argc, char *argv[])
 	LIBXML_TEST_VERSION
 
 	doc = xmlNewDoc(BAD_CAST "1.0");
-	rootNode = xmlNewNode( NULL, BAD_CAST "rdu_log");
-	xmlSetProp( rootNode, (xmlChar *)"date", (xmlChar *)"23/07/2018");
+	rootNode = xmlNewNode( NULL, BAD_CAST "RDU_log");
+	xmlSetProp( rootNode, (xmlChar *)"start_time", BAD_CAST buf);
 	xmlDocSetRootElement( doc, rootNode);
 
-	entry = xmlNewNode( NULL, BAD_CAST "log_entry");
+	entry = xmlNewNode( NULL, BAD_CAST "data");
+	xmlSetProp( entry, BAD_CAST "time_stamp", BAD_CAST buf);
 	xmlAddChild( rootNode, entry);
 
 	xmlNewChild(entry, NULL, BAD_CAST "ThrottleInputVoltage", BAD_CAST "0.0");

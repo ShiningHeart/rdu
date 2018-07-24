@@ -3,11 +3,11 @@ CC=gcc
 # executable name
 OUT=logapp
 # non-standard include paths
-INC= -I../
+INC= -I../ -I/usr/include/libxml2
 # compiler flags
 CFLAGS= -g -std=c99 -Wall -c
 # libraries
-LIBS= -lrt -pthread
+LIBS= -lrt -pthread -L/usr/lib/x86_64 -lxml2
 # object file directory
 OBJDIR=obj
 # object files
