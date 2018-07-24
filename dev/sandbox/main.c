@@ -19,14 +19,23 @@ int main( int argc, char *argv[])
 
 	xmlDocPtr doc = NULL;
 	xmlNodePtr rootNode = NULL;
-
+	xmlNodePtr entry  = NULL;
 	LIBXML_TEST_VERSION
 
 	doc = xmlNewDoc(BAD_CAST "1.0");
 	rootNode = xmlNewNode( NULL, BAD_CAST "rdu_log");
-	xmlSetProp( rootNode, "date", "23/07/2018");
+	xmlSetProp( rootNode, (xmlChar *)"date", (xmlChar *)"23/07/2018");
 	xmlDocSetRootElement( doc, rootNode);
 
+	entry = xmlNewNode( NULL, BAD_CAST "log_entry");
+	xmlAddChild( rootNode, entry);
+
+	xmlNewChild(entry, NULL, BAD_CAST "ThrottleInputVoltage", BAD_CAST "0.0");
+	xmlNewChild(entry, NULL, BAD_CAST "BatteryVoltage", BAD_CAST "0.0");
+	xmlNewChild(entry, NULL, BAD_CAST "BatteryDischargeCurrent", BAD_CAST "0.0");
+	xmlNewChild(entry, NULL, BAD_CAST "State", BAD_CAST "UNKNOWN");
+	xmlNewChild(entry, NULL, BAD_CAST "EnableSignal", BAD_CAST "UNKNOWN");
+	xmlNewChild(entry, NULL, BAD_CAST "RunSignal", BAD_CAST "UNKNOWN");
 
 	xmlSaveFormatFileEnc("TEST.xml", doc, "UTF-8", 1);
 	xmlFreeDoc(doc);
