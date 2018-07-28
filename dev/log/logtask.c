@@ -58,6 +58,12 @@ void *get_in_addr( struct sockaddr *sa)
 static void loghbeat( union sigval unused)
 {
 	int err;
+	xmlNodePtr entryNode = NULL;
+	time_t secSinceEpoch;
+	struct tm timeStamp;
+	char timeStampBuf[64];
+	char dataBuf[32];
+
 
 	/* enter critical section */
 	err = sem_wait( &((dxshmem_t *)map)->sem);
@@ -68,7 +74,27 @@ static void loghbeat( union sigval unused)
 	}
 	else
 	{
+		// generate time stamp
+		time( &secSinceEpoch);
+		(void) localtime_r( &secSinceEpoch, &timeStamp);
+		(void) asctime_r( &timeStamp, timeStampBuf);
+		*(strchr(timeStampBuf, '\n')) = '\0';
+
 		/* TBD: periodic work */
+		entryNode = xmlNewNode( NULL, BAD_CAST "data");
+		if ( entryNode != NULL) // if successful
+		{
+			xmlSetProp( entryNode, BAD_CAST "time", BAD_CAST timeStampBuf);
+			xmlAddChild( rootNode, entryNode);
+
+			snprintf( dataBuf, sizeof(dataBuf)-1, "%f", ((dxshmem_t *)map)->throttleInput_V);
+			xmlNewChild( entryNode, NULL, BAD_CAST "ThrotInVolt", BAD_CAST dataBuf);
+
+				snprintf( dataBuf, sizeof(dataBuf)-1, "%f", ((dxshmem_t *)map)->batteryVoltage_V);
+			xmlNewChild( entryNode, NULL, BAD_CAST "BattVolt", BAD_CAST dataBuf);
+
+			xmlSaveFormatFileEnc( "LOG.xml", doc, "UTF-8", 1);
+		}
 
 
 		/* leave critical section */
